@@ -1,0 +1,1 @@
+zig build-exe -lc --subsystem windows capslang.c -target x86_64-windows
