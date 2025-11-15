@@ -1,2 +1,5 @@
 *.exe
+*.json
+*.obj
 *.pdb
+.vs/
