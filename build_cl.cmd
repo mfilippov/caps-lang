@@ -1,1 +1,1 @@
-cl capslang.c /link user32.lib
+cl capslang.c /link user32.lib /SUBSYSTEM:WINDOWS
