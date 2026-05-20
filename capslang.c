@@ -2,12 +2,11 @@
 #include <windows.h>
 
 #define EXIT_ID 33
-#define REHOOK_INTERVAL_MS 30000
+#define PROBE_INTERVAL_MS 300000
 
 static HHOOK kHook;
-static UINT_PTR rehookTimerId;
-
-static HHOOK InstallHook(void);
+static UINT_PTR probeTimerId;
+static HANDLE hEvent;
 
 static LRESULT CALLBACK KbdHook(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
@@ -32,11 +31,30 @@ static HHOOK InstallHook(void) {
 	return SetWindowsHookEx(WH_KEYBOARD_LL, KbdHook, GetModuleHandle(NULL), 0);
 }
 
+static void Cleanup(HWND hWnd) {
+	KillTimer(hWnd, probeTimerId);
+	UnhookWindowsHookEx(kHook);
+	DestroyWindow(hWnd);
+	CloseHandle(hEvent);
+}
+
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (msg == WM_QUERYENDSESSION) {
 		return TRUE;
 	}
-	if (msg == WM_ENDSESSION && wParam) {
+	if (msg == WM_ENDSESSION) {
+		if (wParam) {
+			Cleanup(hWnd);
+			ExitProcess(0);
+		}
+		return 0;
+	}
+	if (msg == WM_TIMER) {
+		UnhookWindowsHookEx(kHook);
+		kHook = InstallHook();
+		return 0;
+	}
+	if (msg == WM_DESTROY) {
 		PostQuitMessage(0);
 		return 0;
 	}
@@ -54,7 +72,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, LPSTR cmd, int show) 
 	WNDCLASS wc = {0};
 	HWND hWndHidden;
 
-	HANDLE hEvent = CreateEvent(NULL, TRUE, FALSE, _T("CapsLang"));
+	hEvent = CreateEvent(NULL, TRUE, FALSE, _T("CapsLang"));
 	if (hEvent == NULL) {
 		failed(_T("CreateEvent()"));
 	}
@@ -70,7 +88,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, LPSTR cmd, int show) 
 	RegisterClass(&wc);
 
 	hWndHidden = CreateWindow(wc.lpszClassName, _T("CapsLang"), 0,
-		0, 0, 0, 0, HWND_MESSAGE, NULL, hInst, NULL);
+		0, 0, 0, 0, NULL, NULL, hInst, NULL);
 	if (!hWndHidden) {
 		failed(_T("CreateWindow()"));
 	}
@@ -84,7 +102,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, LPSTR cmd, int show) 
 		failed(_T("SetWindowsHookEx()"));
 	}
 
-	rehookTimerId = SetTimer(hWndHidden, 0, REHOOK_INTERVAL_MS, NULL);
+	probeTimerId = SetTimer(hWndHidden, 0, PROBE_INTERVAL_MS, NULL);
 
 	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
 		if (bRet == -1) {
@@ -100,10 +118,6 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, LPSTR cmd, int show) 
 		DispatchMessage(&msg);
 	}
 
-	KillTimer(hWndHidden, rehookTimerId);
-	UnhookWindowsHookEx(kHook);
-	DestroyWindow(hWndHidden);
-	CloseHandle(hEvent);
-
+	Cleanup(hWndHidden);
 	return 0;
 }
