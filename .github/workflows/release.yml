@@ -84,13 +84,16 @@ jobs:
           until [ -f "/spool/results/$id/status.json" ]; do sleep 10; done
           cat "/spool/results/$id/status.json"
           grep -q '"status": "signed"' "/spool/results/$id/status.json"
-          mkdir signed
-          cp "/spool/results/$id"/*.exe signed/
+          # The runner is persistent and this job has no checkout, so the workspace is not
+          # cleaned between runs; RUNNER_TEMP is emptied by the runner before every job.
+          out="$RUNNER_TEMP/signed"
+          rm -rf "$out" && mkdir "$out"
+          cp "/spool/results/$id"/*.exe "$out"/
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: signed
-          path: signed/*.exe
+          path: ${{ runner.temp }}/signed/*.exe
           if-no-files-found: error
 
   release:
