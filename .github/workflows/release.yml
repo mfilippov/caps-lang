@@ -30,6 +30,13 @@ jobs:
           call "%VSDIR%\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.vcvars }} || exit /b 1
           cl capslang.c /Fe:capslang-${{ matrix.arch }}.exe /link user32.lib /SUBSYSTEM:WINDOWS
 
+      # Shown on the run page (Summary) to compare with the sign-pending screen.
+      - name: SHA256
+        shell: pwsh
+        run: |
+          $h = (Get-FileHash capslang-${{ matrix.arch }}.exe -Algorithm SHA256).Hash.ToLower()
+          "capslang-${{ matrix.arch }}.exe: ``$h``" >> $env:GITHUB_STEP_SUMMARY
+
       - uses: actions/upload-artifact@v4
         with:
           name: unsigned-${{ matrix.arch }}
@@ -80,6 +87,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: capslang-task.xml
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@v4
         with:
           name: signed
@@ -88,5 +100,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          cat >notes.md <<'NOTES'
+          ## Install
+
+          1. Download `capslang-x64.exe` or `capslang-arm64.exe` and save it as
+             `C:\ProgramData\caps-lang\capslang.exe`.
+          2. Download `capslang-task.xml` and register the logon task:
+             `schtasks /create /xml capslang-task.xml /tn "Caps Lang"`
+          3. Sign out and back in, or start it now: `schtasks /run /tn "Caps Lang"`
+
+          The executables are Authenticode-signed by Mikhail Filippov.
+          NOTES
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
-            --draft --title "$GITHUB_REF_NAME" --generate-notes capslang-*.exe
+            --draft --title "$GITHUB_REF_NAME" --notes-file notes.md --generate-notes \
+            capslang-*.exe capslang-task.xml
