@@ -75,7 +75,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - id: sign
-        uses: mfilippov/github-codesign/request-signature@d17bdb1b5f08fbcbec5f4d687a3fba5c8c476038 # v1.0.0
+        uses: mfilippov/github-codesign/request-signature@bf9792898b8d5d66c14d1db6304b9fa33ff8570a # v1.0.1
         with:
           artifact: unsigned
 
@@ -113,7 +113,7 @@ jobs:
 
       # The signed files came back through the self-hosted runner: prove they are the attested
       # GitHub-hosted build plus a valid signature by the pinned certificate.
-      - uses: mfilippov/github-codesign/verify-signed@d17bdb1b5f08fbcbec5f4d687a3fba5c8c476038 # v1.0.0
+      - uses: mfilippov/github-codesign/verify-signed@bf9792898b8d5d66c14d1db6304b9fa33ff8570a # v1.0.1
         with:
           signed: signed
           unsigned: unsigned
