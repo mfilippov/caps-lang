@@ -93,7 +93,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, LPSTR cmd, int show) 
 		failed(_T("CreateWindow()"));
 	}
 
-	if (RegisterHotKey(hWndHidden, EXIT_ID, MOD_CONTROL | MOD_SHIFT, 'L') == 0) {
+	if (RegisterHotKey(hWndHidden, EXIT_ID, MOD_CONTROL | MOD_ALT | MOD_SHIFT, 'L') == 0) {
 		failed(_T("RegisterHotKey()"));
 	}
 

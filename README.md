@@ -4,7 +4,7 @@ Use Caps Lock to switch the keyboard layout on Windows.
 
 - **Caps Lock** switches to the next input language in the active window.
 - **Shift+Caps Lock** toggles Caps Lock as usual.
-- **Ctrl+Shift+L** exits.
+- **Ctrl+Alt+Shift+L** exits.
 
 A tiny background program (one C file, no UI, no settings) built on a low-level keyboard hook.
 It re-installs the hook every 5 minutes, since Windows can silently drop low-level hooks.
@@ -18,7 +18,7 @@ folder and run `install.cmd`. It checks the signature, copies the exe to
 `C:\ProgramData\caps-lang\capslang.exe`, registers a "Caps Lang" task that starts it at logon,
 and starts it now.
 
-Uninstall: press Ctrl+Shift+L, then
+Uninstall: press Ctrl+Alt+Shift+L, then
 
 ```
 schtasks /delete /tn "Caps Lang" /f
